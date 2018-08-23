@@ -45,6 +45,8 @@ class CreateSavePromptCommand(sublime_plugin.TextCommand):
 
       if use_first_line_as_file:
         home_dir = os.path.join(home_dir, self.view.substr(self.view.line(0)))
+      else:
+        home_dir = os.path.join(home_dir, '') #Adds a trailing slash
 
       self.window().show_input_panel("File Location:", home_dir, self.onFileEntered, None, None)
 
