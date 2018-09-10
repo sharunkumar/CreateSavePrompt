@@ -3,6 +3,7 @@ import sublime, sublime_plugin
 import os
 
 class CreateSavePromptCommand(sublime_plugin.TextCommand):
+  last_folder = ""
   def onFileEntered(self, location):
     if os.path.isdir(location):
       sublime.error_message("CreateSavePrompt doesnt save directories. Yet.")
@@ -38,17 +39,26 @@ class CreateSavePromptCommand(sublime_plugin.TextCommand):
       use_first_line_as_file = self.s.get("use_first_line_as_file")
 
       folders = sublime.active_window().folders()
-      if len(folders) == 0:
-        home_dir = os.path.expanduser("~")
-      else:
-        home_dir = folders[0]
+      if self.last_folder == "": #default functionality
+        if len(folders) == 0:
+          home_dir = os.path.expanduser("~")
+        else:
+          home_dir = folders[0]
 
-      if use_first_line_as_file:
-        home_dir = os.path.join(home_dir, self.view.substr(self.view.line(0)))
+        if use_first_line_as_file:
+          home_dir = os.path.join(home_dir, self.view.substr(self.view.line(0)))
+        else:
+          home_dir = os.path.join(home_dir, '') #Adds a trailing slash
       else:
-        home_dir = os.path.join(home_dir, '') #Adds a trailing slash
+        home_dir = os.path.join(self.last_folder, '')      
 
       self.window().show_input_panel("File Location:", home_dir, self.onFileEntered, None, None)
 
   def window(self):
     return sublime.active_window()
+
+class LogLastFolder(sublime_plugin.ViewEventListener):
+  def on_activated(self): #Event Listener to save the last focused file to CreateSavePromptCommand.last_folder
+    if(sublime.load_settings("CreateSavePrompt.sublime-settings").get("use_recent_open_file_folder")):
+      if (self.view.file_name() != None):
+        CreateSavePromptCommand.last_folder = os.path.dirname(self.view.file_name())
